@@ -9,7 +9,6 @@ import os
 
 
 class SymptomNormalizer:
-    """Normalizes symptoms using semantic similarity"""
     
     def __init__(self, dataset_path=None, model_name="all-MiniLM-L6-v2"):
         # Handle default path - try current dir, then parent dir
@@ -26,6 +25,7 @@ class SymptomNormalizer:
         self.dataset_path = dataset_path
         
         # Load data
+        print("DEBUG dataset_path =", dataset_path)
         self.df_disease = pd.read_csv(dataset_path)
         
         # Build canonical symptoms

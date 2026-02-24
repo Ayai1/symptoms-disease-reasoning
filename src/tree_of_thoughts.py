@@ -7,12 +7,9 @@ from rag_signal_extractor import extract_rag_keywords
 
 
 class TreeOfThoughts:
-    """Tree-of-Thoughts reasoning for interactive diagnosis"""
 
     def __init__(self, dataset_path="dataset.csv", severity_path="Symptom-severity.csv"):
-        """
-        Initialize Tree-of-Thoughts system
-        """
+
         self.scorer = get_scorer(dataset_path, severity_path)
         self.severity_map = self.scorer.severity_map
 
@@ -30,7 +27,7 @@ class TreeOfThoughts:
     "status": "open"
 }
     # ---------------------------------------------------------
-    # ⭐ RAG-GUIDED SYMPTOM SELECTION (NEW)
+    # RAG-GUIDED SYMPTOM SELECTION (NEW)
     # ---------------------------------------------------------
     def select_discriminative_symptoms(self, missing_symptoms, disease_name=None, top_n=2):
         """
@@ -84,7 +81,7 @@ class TreeOfThoughts:
         ranked = sorted(
             missing_symptoms,
             key=lambda s: (
-                rag_boost(s),      # ⭐ literature signal
+                rag_boost(s),      # literature signal
                 severity_score(s)  # severity weight
             ),
             reverse=True
@@ -253,7 +250,7 @@ class TreeOfThoughts:
 _tot = None
 
 
-def get_tot(dataset_path="dataset.csv", severity_path="Symptom-severity.csv"):
+def get_tot(dataset_path="data/dataset.csv", severity_path="data/Symptom-severity.csv"):
     global _tot
     if _tot is None:
         _tot = TreeOfThoughts(dataset_path, severity_path)

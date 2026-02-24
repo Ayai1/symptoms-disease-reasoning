@@ -1,8 +1,3 @@
-"""
-Phase 4: Ensemble Predictor
-Combines Random Forest (data-driven) and Rule-Based (knowledge-driven) predictions
-"""
-
 import sys
 import os
 sys.path.insert(0, os.path.dirname(__file__))
@@ -12,22 +7,11 @@ from symptom_normalizer import normalize_symptoms
 
 
 class EnsemblePredictor:
-    """Combines RF and rule-based predictions"""
-    
     def __init__(self, rf_model_path="models/rf_model.pkl", 
-                 dataset_path="dataset.csv",
-                 severity_path="Symptom-severity.csv",
+                 dataset_path="data/dataset.csv",
+                 severity_path="data/Symptom-severity.csv",
                  alpha=0.4, beta=0.6):
-        """
-        Initialize ensemble predictor
-        
-        Args:
-            rf_model_path: Path to trained RF model
-            dataset_path: Path to dataset.csv
-            severity_path: Path to Symptom-severity.csv
-            alpha: Weight for RF predictions (default: 0.4)
-            beta: Weight for rule-based scores (default: 0.6)
-        """
+
         self.alpha = alpha
         self.beta = beta
         self.rf_predictor = get_predictor(rf_model_path)
@@ -36,17 +20,6 @@ class EnsemblePredictor:
         print(f"Ensemble predictor initialized (RF: {alpha}, Rule-based: {beta})")
     
     def predict(self, user_symptoms, min_score=0.1, min_matches=2):
-        """
-        Get ensemble predictions
-        
-        Args:
-            user_symptoms: List of symptom strings
-            min_score: Minimum final score to include
-            min_matches: Minimum symptom matches
-        
-        Returns:
-            List of dictionaries with disease, score, matched, missing, rf_prob, rule_score
-        """
         # Normalize symptoms
         normalized = normalize_symptoms(user_symptoms)
         
@@ -123,7 +96,7 @@ _ensemble = None
 
 
 def get_ensemble(alpha=0.4, beta=0.6, rf_model_path="models/rf_model.pkl",
-                 dataset_path="dataset.csv", severity_path="Symptom-severity.csv"):
+                 dataset_path="data/dataset.csv", severity_path="data/Symptom-severity.csv"):
     """Get or create the global ensemble instance"""
     global _ensemble
     if _ensemble is None or _ensemble.alpha != alpha or _ensemble.beta != beta:
