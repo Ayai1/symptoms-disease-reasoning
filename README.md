@@ -45,7 +45,6 @@ data/                Lightweight symptom datasets
 rag_*.py             Retrieval & explanation utilities
 run_training.py      Model training entrypoint
 run_diagnosis.py     Interactive diagnostic pipeline
-api_server.py        API interface
 ```
 
 ---
