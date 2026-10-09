@@ -1,6 +1,6 @@
 # Phase 0 Plan: Symptom Reasoning Assistant
 
-Status: **awaiting approval**. No application code changes until approved.
+Status: **approved 2026-10-09**. Decisions taken at approval are recorded in `DECISIONS.md`; where this plan and `DECISIONS.md` differ, `DECISIONS.md` applies.
 
 Contents
 1. Audit of the current repository
@@ -415,14 +415,8 @@ Deployment target proposal: backend on **Hugging Face Spaces (Docker, free CPU t
 
 ## 11. Open questions
 
-1. **Scope change**: accept moving from the 41 legacy diseases to DDXPlus's 49 (mainly respiratory/cardiac/ENT) conditions? Alternative is a much weaker system on the legacy data.
-2. **Emergency numbers**: which regions to support at launch (e.g. India 112 + Tele-MANAS 14416, US 911 + 988, UK 999 + Samaritans 116 123), and should the region come from a user selection or browser locale?
-3. **Probability display**: approve bands-by-default with numbers in the detail panel (10.1)?
-4. **LLM**: include the optional LLM adapter in Phase 5, and if so, which provider? The default build works without it.
-5. **Model artifacts**: ship via GitHub Releases (downloaded at Docker build, checksum-verified) or train inside the Docker build (slower builds, ~1 GB DDXPlus download)?
-6. **Hosting**: Hugging Face Spaces + Vercel acceptable, or a different free host already in use?
-7. **Legacy code**: keep under `legacy/` until Phase 8 and then delete, or delete in Phase 1?
-8. **Licence**: README says MIT; confirm MIT for the repository (DDXPlus CC-BY attribution and MedlinePlus attribution will be included in `NOTICE`).
-9. **Emergency lock**: after a red flag, should the session be locked (current proposal), or may the user state "this is not happening now" and continue? Locking is the safer default.
-10. **Python and Node versions**: Python 3.12 and Node 20 LTS unless another version is required.
-11. **Package manager**: `uv` for Python and `pnpm` for the frontend, or plain `pip`/`npm`?
+All resolved at approval on 2026-10-09. See `DECISIONS.md`:
+DDXPlus scope (D-001), emergency regions and verification (D-002), probability bands (D-003),
+LLM adapter (D-005), artifacts via GitHub Releases (D-007), hosting, CORS and cold starts (D-008),
+legacy removal in Phase 8 (D-009), MIT licence and NOTICE (D-010), session lock with a new-session
+action and self-harm support (D-011), Python 3.12 and Node.js 24 (D-012), uv and pnpm (D-013).

@@ -1,0 +1,130 @@
+# Emergency and crisis-support contacts shown by the safety gate.
+#
+# Safety-critical. Every change must:
+#   1. Check each number against the source_urls listed for it.
+#   2. Update last_verified, verified_by and verification_method.
+# CI fails when last_verified is older than max_age_days
+# (backend/scripts/check_emergency_resources.py). See DECISIONS.md D-002.
+
+schema_version: 1
+last_verified: 2026-10-09
+max_age_days: 90
+verified_by: "Assistant session with web search"
+verification_method: >-
+  Official pages were not directly reachable from the build environment (proxy 403).
+  Each number was confirmed through web search results restricted to the official
+  domains listed in its source_urls. A direct check of those pages is recommended
+  at the next re-verification.
+
+default_region: IN
+
+generic:
+  label: "Other / not listed"
+  emergency_message: >-
+    Call your local emergency number now, or go to the nearest emergency department.
+  support_message: >-
+    If you are thinking about harming yourself, please contact your local emergency
+    number or a crisis line in your country now. You do not have to go through this alone.
+
+regions:
+  IN:
+    label: "India"
+    emergency_message: "Call 112 now, or go to the nearest emergency department."
+    resources:
+      - id: in_emergency
+        kind: emergency
+        label: "National emergency number (police, fire, ambulance)"
+        contact: "112"
+        contact_type: call
+        availability: "24/7"
+        source_urls:
+          - "https://112.gov.in/faq"
+          - "https://www.pib.gov.in/newsite/PrintRelease.aspx?relid=188727"
+      - id: in_ambulance
+        kind: ambulance
+        label: "Ambulance (most states)"
+        contact: "108"
+        contact_type: call
+        availability: "24/7"
+        note: "Available in most states. 112 also connects to ambulance services."
+        source_urls:
+          - "https://www.pib.gov.in/PressReleasePage.aspx?PRID=1601844"
+      - id: in_tele_manas
+        kind: crisis_line
+        label: "Tele-MANAS mental health helpline"
+        contact: "14416"
+        alt_contact: "1-800-891-4416"
+        contact_type: call
+        availability: "24/7, free, many languages"
+        source_urls:
+          - "https://telemanas.mohfw.gov.in/"
+          - "https://www.pib.gov.in/PressReleasePage.aspx?PRID=2022057"
+
+  US:
+    label: "United States"
+    emergency_message: "Call 911 now, or go to the nearest emergency department."
+    resources:
+      - id: us_emergency
+        kind: emergency
+        label: "Emergency services"
+        contact: "911"
+        contact_type: call
+        availability: "24/7"
+        source_urls:
+          - "https://poisonhelp.hrsa.gov/faqs/calling-poison-help/index.html"
+      - id: us_988
+        kind: crisis_line
+        label: "988 Suicide & Crisis Lifeline"
+        contact: "988"
+        contact_type: call_or_text
+        availability: "24/7, free, confidential. Chat at 988lifeline.org."
+        source_urls:
+          - "https://988lifeline.org/get-help/"
+          - "https://www.samhsa.gov/mental-health/988"
+      - id: us_poison
+        kind: poison
+        label: "Poison Help"
+        contact: "1-800-222-1222"
+        contact_type: call
+        availability: "24/7, free, confidential"
+        note: "Call 911 instead if the person has collapsed or is not breathing."
+        source_urls:
+          - "https://poisonhelp.hrsa.gov/about-us"
+
+  GB:
+    label: "United Kingdom"
+    emergency_message: "Call 999 now, or go to A&E."
+    resources:
+      - id: gb_emergency
+        kind: emergency
+        label: "Emergency services"
+        contact: "999"
+        contact_type: call
+        availability: "24/7"
+        source_urls:
+          - "https://www.nhs.uk/nhs-services/mental-health-services/where-to-get-urgent-help-for-mental-health/"
+      - id: gb_111
+        kind: urgent_advice
+        label: "NHS 111 (urgent advice; choose the mental health option for a mental health crisis)"
+        contact: "111"
+        contact_type: call
+        availability: "24/7"
+        source_urls:
+          - "https://www.nhs.uk/nhs-services/mental-health-services/where-to-get-urgent-help-for-mental-health/"
+      - id: gb_samaritans
+        kind: crisis_line
+        label: "Samaritans"
+        contact: "116 123"
+        contact_type: call
+        availability: "24/7, free"
+        source_urls:
+          - "https://www.nhs.uk/every-mind-matters/urgent-support/"
+      - id: gb_shout
+        kind: crisis_text
+        label: "Shout text support"
+        contact: "85258"
+        contact_type: text
+        availability: "24/7, free, confidential"
+        note: "Text SHOUT to 85258."
+        source_urls:
+          - "https://giveusashout.org/get-help/how-shout-works/"

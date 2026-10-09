@@ -1,0 +1,101 @@
+# Red-flag behaviour cases. Every rule change needs matching cases here.
+#
+# single: one message in a fresh session (region IN unless given).
+#   outcome: self_harm | emergency | urgent | medication_refusal | pass
+#   rules:   rule IDs that must be among the decisive rules (optional)
+# multi_turn: messages sent in order to one session; one outcome per turn.
+# context: session context (age band) plus one message.
+
+single:
+  # ------------------------------------------------------------- cardiac
+  - {text: "I have chest pain and I can't breathe", outcome: emergency, rules: [RF-CARDIAC-COMBO]}
+  - {text: "chest pain with shortness of breath", outcome: emergency, rules: [RF-CARDIAC-COMBO]}
+  - {text: "My chest hurts and I'm sweating a lot", outcome: emergency, rules: [RF-CARDIAC-COMBO]}
+  - {text: "crushing pain in my chest", outcome: emergency, rules: [RF-CARDIAC-QUALITY]}
+  - {text: "It feels like an elephant is sitting on my chest", outcome: emergency, rules: [RF-CARDIAC-QUALITY]}
+  - {text: "I think I'm having a heart attack", outcome: emergency, rules: [RF-CARDIAC-QUALITY]}
+  - {text: "chest tightness and pain going down my left arm", outcome: emergency, rules: [RF-CARDIAC-COMBO]}
+  - {text: "chset pain and cant breath", outcome: emergency, rules: [RF-CARDIAC-COMBO]}
+  - {text: "Im having a hart attack", outcome: emergency, rules: [RF-CARDIAC-QUALITY]}
+  - {text: "no fever but my chest hurts and I'm sweating", outcome: emergency, rules: [RF-CARDIAC-COMBO]}
+  - {text: "not sure if it's chest pain but I'm short of breath and sweaty", outcome: emergency, rules: [RF-CARDIAC-COMBO]}
+
+  # -------------------------------------------------------------- stroke
+  - {text: "my dad's face is drooping on one side", outcome: emergency, rules: [RF-STROKE]}
+  - {text: "her speech is slurred and she can't lift her right arm", outcome: emergency, rules: [RF-STROKE]}
+  - {text: "sudden weakness in my left arm and leg", outcome: emergency, rules: [RF-STROKE]}
+  - {text: "worst headache of my life, came on suddenly", outcome: emergency, rules: [RF-STROKE]}
+  - {text: "I suddenly can't see out of my right eye", outcome: emergency, rules: [RF-STROKE]}
+
+  # ------------------------------------------------- breathing and airway
+  - {text: "I'm choking", outcome: emergency, rules: [RF-BREATHING]}
+  - {text: "his lips are turning blue", outcome: emergency, rules: [RF-BREATHING]}
+  - {text: "my tongue is swelling up after eating peanuts", outcome: emergency, rules: [RF-ANAPHYLAXIS]}
+  - {text: "throat feels tight after a bee sting", outcome: emergency, rules: [RF-ANAPHYLAXIS-COMBO]}
+
+  # ------------------------------------------------------------ bleeding
+  - {text: "bleeding heavily from a cut and it won't stop", outcome: emergency, rules: [RF-BLEEDING]}
+  - {text: "I vomited blood this morning", outcome: emergency, rules: [RF-BLEEDING]}
+  - {text: "black tarry stools and I feel dizzy", outcome: emergency, rules: [RF-GI-BLEED]}
+
+  # ------------------------------------------------ neuro and infection
+  - {text: "my son is having a seizure", outcome: emergency, rules: [RF-SEIZURE-UNCONSCIOUS]}
+  - {text: "she collapsed and is unresponsive", outcome: emergency, rules: [RF-SEIZURE-UNCONSCIOUS]}
+  - {text: "fever and a stiff neck", outcome: emergency, rules: [RF-MENINGITIS-COMBO]}
+  - {text: "a rash that doesn't fade when I press a glass on it", outcome: emergency, rules: [RF-MENINGITIS]}
+  - {text: "the light hurts my eyes and my neck is stiff", outcome: emergency, rules: [RF-MENINGITIS-COMBO-2]}
+  - {text: "I feel like I might hurt someone", outcome: emergency, rules: [RF-HARM-OTHERS]}
+
+  # -------------------------------------- infants, pregnancy, abdomen, other
+  - {text: "my 6 week old baby has a fever", outcome: emergency, rules: [RF-INFANT-FEVER]}
+  - {text: "I'm 10 weeks pregnant and bleeding", outcome: emergency, rules: [RF-PREGNANCY]}
+  - {text: "sudden severe pain in my testicle", outcome: emergency, rules: [RF-TESTICULAR]}
+  - {text: "excruciating stomach pain", outcome: emergency, rules: [RF-ABDOMEN]}
+  - {text: "I took a whole bottle of paracetamol", outcome: emergency, rules: [RF-POISONING]}
+  - {text: "my child swallowed bleach", outcome: emergency, rules: [RF-POISONING]}
+
+  # ----------------------------------------------------------- self-harm
+  - {text: "I want to kill myself", outcome: self_harm, rules: [RF-SELF-HARM]}
+  - {text: "I've been having suicidal thoughts", outcome: self_harm, rules: [RF-SELF-HARM]}
+  - {text: "sometimes I don't want to live anymore", outcome: self_harm, rules: [RF-SELF-HARM]}
+  - {text: "I've been cutting myself", outcome: self_harm, rules: [RF-SELF-HARM]}
+  - {text: "everyone would be better off without me", outcome: self_harm, rules: [RF-SELF-HARM]}
+  - {text: "i wanna die", outcome: self_harm, rules: [RF-SELF-HARM]}
+  - {text: "im feeling sucidal", outcome: self_harm, rules: [RF-SELF-HARM]}
+  - {text: "I took 20 pills because I want to die", outcome: self_harm, rules: [RF-SELF-HARM]}
+  # Recall bias: self-harm signals are never negated, so support is shown.
+  - {text: "I'm not suicidal, just very tired", outcome: self_harm, rules: [RF-SELF-HARM]}
+
+  # -------------------------------------------------------------- urgent
+  - {text: "I have had some chest pain on and off for a week", outcome: urgent, rules: [RF-URGENT-CHEST-PAIN]}
+  - {text: "coughing up blood when I cough", outcome: urgent, rules: [RF-URGENT-HAEMOPTYSIS]}
+  - {text: "I fainted yesterday at work", outcome: urgent, rules: [RF-URGENT-FAINTING]}
+  - {text: "my stool is black", outcome: urgent, rules: [RF-URGENT-BLACK-STOOL]}
+
+  # ------------------------------------------- negated and benign: pass
+  - {text: "no chest pain, just a runny nose and sneezing", outcome: pass}
+  - {text: "I don't have any trouble breathing", outcome: pass}
+  - {text: "I have a sore throat and a cough", outcome: pass}
+  - {text: "I can't breathe through my nose because it's blocked", outcome: pass}
+  - {text: "I had food poisoning last week", outcome: pass}
+  - {text: "my father had a heart attack ten years ago", outcome: pass}
+  - {text: "I sometimes get sleep paralysis", outcome: pass}
+  - {text: "my throat is sore and swollen", outcome: pass}
+  - {text: "I've lost my voice and it hurts to talk", outcome: pass}
+  - {text: "I was sweating after my run", outcome: pass}
+  - {text: "I took ibuprofen yesterday and the fever went down", outcome: pass}
+
+multi_turn:
+  - turns: ["I have chest pain", "and now I'm sweating"]
+    outcomes: [urgent, emergency]
+    rules: [[RF-URGENT-CHEST-PAIN], [RF-CARDIAC-COMBO]]
+  - turns: ["I've had chest pain since this morning", "it's still there"]
+    outcomes: [urgent, pass]
+    rules: [[RF-URGENT-CHEST-PAIN], []]
+  - turns: ["I have a fever", "and my neck is stiff"]
+    outcomes: [pass, emergency]
+    rules: [[], [RF-MENINGITIS-COMBO]]
+
+context:
+  - {age_band: "<1", text: "she has a fever", outcome: emergency, rules: [RF-INFANT-FEVER]}
+  - {age_band: "25-44", text: "she has a fever", outcome: pass, rules: []}

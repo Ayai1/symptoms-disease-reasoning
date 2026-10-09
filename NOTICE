@@ -1,0 +1,41 @@
+Symptom Assistant
+Copyright (c) 2026 Ayai1
+Licensed under the MIT License (see LICENSE).
+
+This project uses third-party data under the terms below. The MIT License
+applies to the source code in this repository only; it does not relicense
+the third-party data.
+
+--------------------------------------------------------------------------
+DDXPlus
+--------------------------------------------------------------------------
+Used for model training and evaluation.
+
+Fansi Tchango, A., Goel, R., Wen, Z., Martel, J., & Ghosn, J. (2022).
+DDXPlus: A New Dataset For Automatic Medical Diagnosis.
+Advances in Neural Information Processing Systems 35 (Datasets and
+Benchmarks Track). https://arxiv.org/abs/2205.09148
+
+Dataset: https://figshare.com/articles/dataset/DDXPlus_Dataset/20043374
+Licence: Creative Commons Attribution (CC-BY), as stated by the dataset
+authors. The licence version is recorded in DECISIONS.md (D-010) once
+confirmed against the figshare record.
+
+DDXPlus is synthetic: patients were generated from a proprietary medical
+knowledge base by a rule-based system. Changes made in this project
+(deduplication, feature encoding, train/validation/test handling) are
+documented in docs/.
+
+--------------------------------------------------------------------------
+MedlinePlus
+--------------------------------------------------------------------------
+Explanatory text is drawn from MedlinePlus health topic summaries.
+
+Source: MedlinePlus.gov, U.S. National Library of Medicine.
+https://medlineplus.gov/
+
+MedlinePlus health topic summaries are works of the U.S. federal government
+and are in the public domain in the United States. This project does not
+use copyrighted MedlinePlus content (A.D.A.M. Medical Encyclopedia, ASHP
+drug information or copyrighted images). Use of this information does not
+imply endorsement by the National Library of Medicine.

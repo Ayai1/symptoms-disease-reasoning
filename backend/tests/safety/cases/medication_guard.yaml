@@ -1,0 +1,19 @@
+# Medication guard cases. refuse: true means the message must be refused.
+
+cases:
+  - {text: "how much ibuprofen can I take?", refuse: true}
+  - {text: "what dose of paracetamol is safe for a child", refuse: true}
+  - {text: "Can I take amoxicillin with alcohol?", refuse: true}
+  - {text: "what should I take for a sore throat", refuse: true}
+  - {text: "can you prescribe me antibiotics", refuse: true}
+  - {text: "is it safe to give my son cough syrup", refuse: true}
+  - {text: "how many mg of cetirizine per day", refuse: true}
+  - {text: "should I stop my inhaler", refuse: true}
+  - {text: "what is the best treatment for a cold", refuse: true}
+  - {text: "how do I treat a sinus infection", refuse: true}
+
+  - {text: "I took ibuprofen yesterday and the fever went down", refuse: false}
+  - {text: "how long should I wait before seeing a doctor", refuse: false}
+  - {text: "can I take a shower with a fever", refuse: false}
+  - {text: "I use an inhaler for asthma", refuse: false}
+  - {text: "I have a cough and a runny nose", refuse: false}

@@ -1,0 +1,526 @@
+# Red-flag rules. Safety-critical: changes require matching cases in
+# backend/tests/safety/cases/red_flags.yaml.
+#
+# Model
+#   signals: named findings detected in message text by regular expressions.
+#            Patterns run on normalized text (lowercase, NFKC, straight
+#            apostrophes, contractions restored, spelling fixes applied).
+#            A match is discarded only when it is explicitly negated in the
+#            same clause and the signal is negatable.
+#   rules:   combinations of signals accumulated over the session.
+#            A rule fires when every signal in `all` is present and, if `any`
+#            is given, at least one signal in `any` is present.
+#   levels:  self_harm  -> crisis-support response, session locked
+#            emergency  -> emergency response, session locked, model bypassed
+#            urgent     -> "seek medical advice today" notice, session continues
+#
+# Design bias: recall over precision. A false alarm costs the user one extra
+# step ("Start a new session"); a missed emergency can cost a life.
+
+schema_version: 1
+
+normalization:
+  contractions:
+    cant: "can't"
+    dont: "don't"
+    doesnt: "doesn't"
+    didnt: "didn't"
+    wont: "won't"
+    isnt: "isn't"
+    havent: "haven't"
+    hasnt: "hasn't"
+    couldnt: "couldn't"
+    im: "i'm"
+    ive: "i've"
+  spelling:
+    brething: breathing
+    breating: breathing
+    breathin: breathing
+    breth: breath
+    chset: chest
+    chets: chest
+    hart: heart
+    sucide: suicide
+    suiside: suicide
+    suicde: suicide
+    sucidal: suicidal
+    suicidel: suicidal
+    unconcious: unconscious
+    unconsious: unconscious
+    seizer: seizure
+    siezure: seizure
+    seazure: seizure
+    slured: slurred
+    bleading: bleeding
+    bleding: bleeding
+    vomitting: vomiting
+    vomting: vomiting
+    diziness: dizziness
+    dizzyness: dizziness
+    swolen: swollen
+    sweling: swelling
+    anaphalaxis: anaphylaxis
+    anaphylaxsis: anaphylaxis
+    pregant: pregnant
+    preganant: pregnant
+    pregnet: pregnant
+    stomache: stomach
+    headace: headache
+    hedache: headache
+    feaver: fever
+    fevr: fever
+    paralised: paralysed
+    paralized: paralyzed
+
+negation:
+  # Phrases that negate a finding later in the same clause.
+  # Deliberately excludes bare "never" and "without" ("can't walk without
+  # chest pain" must not be negated).
+  triggers:
+    - "no"
+    - "not"
+    - "denies"
+    - "denied"
+    - "deny"
+    - "never had"
+    - "never have"
+    - "don't have"
+    - "do not have"
+    - "doesn't have"
+    - "does not have"
+    - "haven't had"
+    - "have not had"
+    - "hasn't had"
+    - "has not had"
+    - "free of"
+    - "negative for"
+  # Phrases containing a trigger word that do not negate.
+  pseudo_triggers:
+    - "not sure"
+    - "not certain"
+    - "no idea"
+    - "not only"
+    - "not just"
+    - "no matter"
+    - "no better"
+    - "not better"
+    - "no relief"
+    - "not stop"
+    - "not go away"
+    - "not getting better"
+    - "not improving"
+    - "no longer"
+  # Words that end a clause (punctuation . , ; : ! ? also ends a clause).
+  terminators:
+    - "but"
+    - "however"
+    - "although"
+    - "though"
+    - "except"
+    - "yet"
+    - "and now"
+  window_tokens: 6
+
+signals:
+  # ---------------------------------------------------------------- cardiac
+  - id: chest_pain
+    patterns:
+      - '\bchest\s*(pain|pains|ache|aches|aching|hurts?|hurting|discomfort|burning|tight\w*|pressure|heav\w*|squeez\w*|crush\w*)'
+      - '\b(pain|ache|aching|pressure|tightness|heaviness|discomfort|squeezing|burning)\s+(in|on|across|around|behind)\s+(my|the|his|her|their)?\s*(chest|breastbone|sternum)\b'
+      - '\b(my|his|her|the)\s+chest\s+(is\s+|feels\s+|felt\s+)?(hurting|hurts|tight|heavy|sore|painful|crushed|squeezed)\b'
+  - id: cardiac_chest_pain
+    patterns:
+      - '\bchest\s*(tight\w*|pressure|heav\w*|squeez\w*|crush\w*)'
+      - '\b(crushing|squeezing|pressing|heavy|tight)\s+(\w+\s+)?(chest|central)\s*(pain|feeling|sensation|discomfort)?'
+      - '\b(pressure|tightness|heaviness|squeezing)\s+(in|on|across|around)\s+(my|the|his|her|their)?\s*chest\b'
+      - '\b(crushing|squeezing|pressing|heavy|tight)\s+(pain|pressure|feeling|sensation|ache)\s+(in|on|across|around)\s+(my|the|his|her|their)?\s*chest\b'
+      - '\belephant\s+(is\s+)?(sitting|standing)\s+on\s+(my|his|her|their)\s+chest\b'
+  - id: heart_attack_mention
+    patterns:
+      - "\\b(i'm|i\\s+am|i\\s+think\\s+i'm|might\\s+be|may\\s+be|is|am|he's|she's|having|having\\s+a)\\s+(having\\s+)?(a\\s+)?heart\\s+attack\\b"
+      - '\bcardiac\s+arrest\b'
+  - id: breathlessness
+    patterns:
+      - '\bshort(ness)?\s+of\s+breath\b'
+      - '\bout\s+of\s+breath\b'
+      - '\bbreathless(ness)?\b'
+      - "\\bcan't\\s+catch\\s+(my|his|her|their)\\s+breath\\b"
+      - '\b(hard|difficult)\s+to\s+breathe\b'
+      - '\b(difficulty|trouble|problems?|struggling)\s+(in\s+|with\s+)?breathing\b'
+      - '\bstruggling\s+to\s+breathe\b'
+      - '\bbreathing\s+(is\s+)?(hard|difficult|laboured|labored|heavy|fast|rapid)\b'
+      - '\bbreathing\s+(difficulty|difficulties|trouble|problems?)\b'
+      - '\bwinded\b'
+  - id: severe_breathing
+    patterns:
+      - "\\b(can't|cannot|can\\s+not|unable\\s+to|not\\s+able\\s+to)\\s+breathe?\\b(?!\\s+(through|out\\s+of|from|with)\\s+(my|the|his|her|one)?\\s*(nose|nostrils?)\\b)"
+      - "\\b(can't|cannot|unable\\s+to)\\s+(speak|talk|finish)\\b.{0,25}\\b(sentences?|words?|breath)\\b"
+      - '\b(blue|grey|gray)\s+(lips|face|skin|tongue)\b'
+      - '\blips\s+((are|have|look|looking|turning|turned|gone|went|going)\s+){0,2}(blue|grey|gray)\b'
+      - '\bchok(e|es|ed|ing)\b'
+      - '\bgasping\b'
+      - '\bsuffocat\w*\b'
+      - '\b(stopped|not|isn''t|is\s+not)\s+breathing\b'
+  - id: sweating
+    patterns:
+      - '\bsweat(ing|y|s)?\b'
+      - '\bcold\s+sweats?\b'
+      - '\bclammy\b'
+      - '\bdiaphore\w*\b'
+  - id: arm_jaw_pain
+    patterns:
+      - '\b(spread\w*|radiat\w*|going|goes|moving|moves|shoot\w*|travel\w*)\s+(down|to|into|up|through)\s+(my|the|his|her|their)?\s*(left\s+|right\s+)?(arm|arms|shoulder|shoulders|jaw|neck|back)\b'
+      - '\b(left|right)\s+arm\s+(pain|ache|hurts|hurting|numb\w*|tingl\w*)\b'
+      - '\b(pain|ache|aching|numbness|tingling)\s+(in|down)\s+(my|the|his|her)?\s*(left|right)\s+arm\b'
+      - '\bjaw\s+(pain|ache|hurts|hurting)\b'
+      - '\b(pain|ache)\s+in\s+(my|the|his|her)?\s*jaw\b'
+  - id: nausea
+    patterns:
+      - '\bnause\w*\b'
+      - '\bfeel(ing)?\s+sick\b'
+      - '\b(throw\w*|threw)\s+up\b'
+      - '\bvomit\w*\b'
+  - id: dizziness
+    patterns:
+      - '\bdizz\w*\b'
+      - '\blight[\s-]?headed\w*\b'
+      - '\bfeel(ing)?\s+faint\b'
+  - id: fainted
+    patterns:
+      - '\bfaint(ed|ing)\b'
+      - '\bpass(ed|ing)\s+out\b'
+      - '\bblack(ed|ing)\s+out\b'
+      - '\b(lost|loss\s+of|losing)\s+consciousness\b'
+      - '\bcollaps\w*\b'
+      - '\bsyncope\b'
+  - id: palpitations
+    patterns:
+      - '\bpalpitation\w*\b'
+      - '\bheart\s+(is\s+)?(racing|pounding|fluttering|skipping|beating\s+(really\s+|very\s+)?fast)\b'
+      - '\b(racing|pounding|irregular)\s+heart(beat)?\b'
+
+  # ----------------------------------------------------------------- stroke
+  - id: face_droop
+    patterns:
+      - '\b(face|mouth|smile|lip|eyelid)\s+(is\s+|has\s+|feels\s+|looks\s+)?(droop\w*|sagg\w*|uneven|lopsided|fallen|dropped|drooped|crooked)\b'
+      - '\b(droop\w*|sagg\w*|fallen|dropped)\s+(on\s+)?(one\s+side\s+of\s+)?(my|the|his|her|their)?\s*(face|mouth|smile)\b'
+      - '\b(numb\w*|weak\w*|drooping)\s+(on\s+)?one\s+side\s+of\s+(my|the|his|her|their)\s+face\b'
+  - id: one_sided_weakness
+    patterns:
+      - "\\b(weak\\w*|numb\\w*|can't\\s+(move|lift|feel)|cannot\\s+(move|lift|feel))\\b.{0,30}\\b(one\\s+side|left\\s+side|right\\s+side|(left|right)\\s+(arm|leg|hand|foot))\\b"
+      - '\b(one|left|right)\s+(side|arm|leg|hand)\s+(is\s+|feels\s+|went\s+|has\s+gone\s+|goes\s+)?(weak|numb|limp|dead|heavy|floppy|paraly\w*)\b'
+      - '(?<!sleep )\bparaly(s|z)\w*\b'
+      - "\\barm\\s+(is\\s+)?(drift\\w*|won't\\s+(lift|stay\\s+up))\\b"
+      - "\\bhaving\\s+a\\s+stroke\\b"
+      - '\b(is|am|might\s+be|may\s+be|think\s+i''m|i''m)\s+(having\s+)?a\s+stroke\b'
+  - id: speech_difficulty
+    patterns:
+      - '\bslurr\w*\b'
+      - "\\b(can't|cannot|unable\\s+to|trouble|difficulty|hard\\s+to|struggling\\s+to)\\s+(get\\s+(the\\s+|my\\s+)?words\\s+out|find\\s+(the\\s+|my\\s+)?words)\\b"
+      - "\\bsudden(ly)?\\b.{0,15}\\b(can't|cannot|unable\\s+to|couldn't|could\\s+not)\\s+(speak|talk)\\b"
+      - '\b(talking|speaking)\s+(nonsense|gibberish)\b'
+      - '\bwords\s+(come|came|are\s+coming)\s+out\s+(wrong|jumbled|garbled)\b'
+      - '\bspeech\s+(is\s+|has\s+|became\s+|went\s+)?(slurred|garbled|strange|weird|confused|jumbled|gone)\b'
+      - '\b(garbled|jumbled|confused)\s+(speech|words)\b'
+  - id: sudden_confusion
+    patterns:
+      - '\bsudden(ly)?\s+(very\s+|really\s+)?(confus\w*|disorient\w*)\b'
+      - '\b(confus\w*|disorient\w*)\s+(all\s+of\s+a\s+)?sudden(ly)?\b'
+  - id: sudden_vision_loss
+    patterns:
+      - "\\bsudden(ly)?\\b.{0,25}\\b(lost|loss\\s+of|can't\\s+see|cannot\\s+see|blind\\w*|double\\s+vision)\\b"
+      - '\b(lost|losing)\s+(my\s+|the\s+|his\s+|her\s+)?(vision|sight|eyesight)\b'
+      - '\bwent\s+blind\b'
+      - '\bblind(ness)?\s+in\s+one\s+eye\b'
+  - id: thunderclap_headache
+    patterns:
+      - '\bworst\s+(\w+\s+)?headache\b'
+      - '\bsudden(ly)?\s+(\w+\s+)?(severe|terrible|excruciating|intense|explosive|blinding|agonising|agonizing)\s+headache\b'
+      - '\b(severe|terrible|excruciating|intense|explosive|blinding)\s+headache\b.{0,25}\bsudden(ly)?\b'
+      - '\bthunderclap\b'
+      - '\bheadache\b.{0,30}\b(like\s+)?(being\s+)?(hit|struck|kicked)\s+(in|on)\s+the\s+head\b'
+
+  # ---------------------------------------------------------------- airway / allergy
+  - id: airway_swelling
+    patterns:
+      - '\b(tongue|lips?|mouth)\s+(is\s+|are\s+|feels?\s+|getting\s+|has\s+|have\s+|started\s+)?(swell\w*|swollen|puff\w*)\b'
+      - '\bswell\w*\s+(of|in|on)\s+(my|the|his|her|their)?\s*(tongue|lips?|mouth)\b'
+      - '\b(swollen|swelling)\s+(tongue|lips?|mouth)\b'
+      - '\bthroat\s+(is\s+|feels\s+)?(closing|tightening|closing\s+up)\b'
+      - '\banaphyla\w*\b'
+  - id: throat_swollen
+    patterns:
+      - '\bthroat\s+(is\s+|feels\s+)?(swell\w*|swollen|tight)\b'
+      - '\b(swollen|swelling)\s+throat\b'
+  - id: allergic_trigger
+    patterns:
+      - '\ballerg\w*\b'
+      - '\b(stung|sting|bee|wasp|hornet)\b'
+      - '\b(peanut|peanuts|nut|nuts|shellfish)\b'
+      - '\bhives\b'
+
+  # ---------------------------------------------------------------- bleeding
+  - id: severe_bleeding
+    patterns:
+      - "\\b(bleeding|blood)\\b.{0,30}\\b(won't|will\\s+not|doesn't|does\\s+not|isn't|is\\s+not|can't|cannot|not)\\s+(stop|stopping)\\b"
+      - '\b(heavy|heavily|severe|lots\s+of|a\s+lot\s+of|uncontrolled|profuse|massive|pouring|gushing|spurting)\s+(bleeding|blood)\b'
+      - '\bbleeding\s+(heavily|badly|a\s+lot|profusely|everywhere)\b'
+      - '\bsoaked\b.{0,30}\b(blood|pads?|towels?)\b'
+      - '\b(cough\w*|vomit\w*|throw\w*)\s+up\s+(a\s+lot\s+of|lots\s+of|a\s+cup\s+of|cups\s+of)\s+blood\b'
+  - id: vomiting_blood
+    patterns:
+      - '\b(vomit\w*|throw\w*\s+up|threw\s+up|puk\w*|sick\w*)\s+(up\s+)?(blood|bloody)\b'
+      - '\bblood\s+in\s+(my\s+|the\s+|his\s+|her\s+)?(vomit|sick)\b'
+      - '\b(vomit|sick)\s+(looks\s+like\s+)?coffee\s+grounds\b'
+      - '\b(haematemesis|hematemesis)\b'
+  - id: coughing_blood
+    patterns:
+      - '\bcough\w*\s+(up\s+)?(blood|bloody)\b'
+      - '\bblood\s+(in|when)\s+(my\s+)?(cough\w*|phlegm|sputum|mucus|spit)\b'
+      - '\b(bloody|blood-stained|bloodstained)\s+(phlegm|sputum|mucus)\b'
+      - '\b(haemoptysis|hemoptysis)\b'
+  - id: black_stool
+    patterns:
+      - '\b(black|tarry|tar-like|tar\s+like)\s+(stool|stools|poo|poos|poop|feces|faeces|bowel\s+movements?)\b'
+      - '\b(stool|stools|poo|poop)\s+(is\s+|are\s+|looks\s+|look\s+)?(black|tarry)\b'
+  - id: bleeding_any
+    patterns:
+      - '\bbleed\w*\b'
+      - '\bspotting\b'
+
+  # -------------------------------------------------------- neuro / consciousness
+  - id: seizure
+    patterns:
+      - '\bseiz\w*\b'
+      - '\bconvuls\w*\b'
+      - '\b(having|had|has)\s+a\s+fit\b'
+      - '\bfitting\b'
+  - id: unresponsive
+    patterns:
+      - '\bunconscious\b'
+      - '\bunresponsive\b'
+      - "\\b(won't|will\\s+not|can't|cannot)\\s+wake\\b"
+      - '\bnot\s+(waking|responding)\b'
+
+  # ---------------------------------------------------------------- infection
+  - id: fever
+    patterns:
+      - '\bfever\w*\b'
+      - '\bhigh\s+temp(erature)?\b'
+      - '\btemp(erature)?\s+(of\s+)?(3[89]|4[0-2]|10[0-6])\b'
+      - '\b(pyrexia|febrile)\b'
+      - '\bburning\s+up\b'
+  - id: stiff_neck
+    patterns:
+      - '\b(stiff|rigid)\s+neck\b'
+      - '\bneck\s+(is\s+|feels\s+)?(stiff|rigid)\b'
+      - "\\b(can't|cannot)\\s+(bend|move|touch)\\s+(my\\s+)?(chin|neck|head)\\b"
+  - id: non_blanching_rash
+    patterns:
+      - "\\b(glass|tumbler)\\s+test\\b"
+      - '\bnon[\s-]?blanching\b'
+      - '\bpurple\s+(spots|rash|blotches|patches|dots)\b'
+      - '\bpetechia\w*\b'
+      - "\\brash\\b.{0,40}\\b(doesn't|does\\s+not|won't)\\s+fade\\b"
+  - id: photophobia
+    patterns:
+      - '\blight\s+(hurts|is\s+painful)\b'
+      - '\bsensitiv\w*\s+to\s+(the\s+)?light\b'
+      - '\bphotophob\w*\b'
+      - "\\bcan't\\s+(stand|bear|look\\s+at)\\s+(the\\s+)?light\\b"
+  - id: confusion
+    patterns:
+      - '\bconfus\w*\b'
+      - '\bdisorient\w*\b'
+
+  # ------------------------------------------------------- age and pregnancy
+  - id: infant
+    patterns:
+      - '\b(baby|infant|newborn|new\s+born)\b'
+      - '\b([1-9]|1[0-2])\s*(-|\s)?(week|wk)s?(-|\s)?old\b'
+      - '\b([0-3])\s*(-|\s)?(month|mo)s?(-|\s)?old\b'
+  - id: pregnant
+    patterns:
+      - '\bpregnan\w*\b'
+      - '\bexpecting\s+a\s+baby\b'
+  - id: severe_abdominal_pain
+    patterns:
+      - '\b(severe|excruciating|unbearable|intense|terrible|worst|agonising|agonizing|sudden|extreme)\s+(\w+\s+)?(abdominal|stomach|belly|tummy|abdomen)\s*(pain|pains|ache|cramps?)\b'
+      - '\b(abdominal|stomach|belly|tummy)\s+(pain|ache)\b.{0,30}\b(severe|excruciating|unbearable|worst|agonising|agonizing|extreme)\b'
+  - id: testicular_pain
+    patterns:
+      - '\b(sudden|severe|intense|excruciating)\b.{0,20}\b(testic\w*|testes|testicle\w*|scrot\w*|balls?)\b'
+      - '\b(testic\w*|testicle\w*|scrot\w*)\s+(pain|ache|swelling|swollen|twist\w*)\b'
+
+  # --------------------------------------------- self-harm, harm, poisoning
+  - id: self_harm
+    negatable: false
+    patterns:
+      - '\b(kill|killing|hurt|hurting|harm|harming|cut|cutting|burn|burning|starve|starving)\s+(my\s*self|myself)\b'
+      - '\bsuicid\w*\b'
+      - '\bend\s+(my|his|her)\s+(own\s+)?life\b'
+      - '\bend\s+it\s+all\b'
+      - '\btake\s+(my|his|her)\s+(own\s+)?life\b'
+      - '\b(want|wanted|wanting)\s+to\s+die\b'
+      - '\bwanna\s+die\b'
+      - '\bwish\s+i\s+(was|were)\s+dead\b'
+      - '\bwish\s+i\s+could\s+(die|disappear\s+forever)\b'
+      - "\\b(don't|do\\s+not|no\\s+longer|doesn't|does\\s+not)\\s+want\\s+to\\s+(live|be\\s+alive|be\\s+here|exist|wake\\s+up)\\b"
+      - '\bbetter\s+off\s+dead\b'
+      - '\bbetter\s+off\s+without\s+me\b'
+      - '\bno\s+(reason|point)\s+(to|in)\s+(live|living|going\s+on|being\s+alive)\b'
+      - '\bnot\s+worth\s+living\b'
+      - '\bself[\s-]?harm\w*\b'
+      - '\boverdos\w*\s+on\s+purpose\b'
+  - id: harm_to_others
+    negatable: false
+    patterns:
+      - '\b(kill|hurt|harm|attack)\s+(someone|somebody|others|other\s+people|people|my\s+(wife|husband|partner|child|kids|family|mother|father|baby))\b'
+  - id: poisoning
+    patterns:
+      - '\boverdos\w*\b'
+      - '\btook\s+too\s+(many|much)\b'
+      - '\b(took|swallowed|ate|drank)\s+(a\s+|the\s+)?(whole|entire|full)\s+(bottle|packet|pack|box|strip)\b'
+      - '\b(swallowed|drank|ate|took)\s+(some\s+)?(bleach|poison|antifreeze|detergent|pesticide|insecticide|rat\s+poison|weed\s*killer|kerosene|batter(y|ies))\b'
+      - '(?<!food )\bpoison(ed|ing)\b'
+
+rules:
+  # ------------------------------------------------------------- self-harm
+  - id: RF-SELF-HARM
+    level: self_harm
+    title: "You deserve support right now"
+    rationale: "Any mention of suicidal thoughts or self-harm."
+    when: {any: [self_harm]}
+    extra_resources: [poison]
+
+  # ------------------------------------------------------------- emergency
+  - id: RF-HARM-OTHERS
+    level: emergency
+    title: "Get help now"
+    rationale: "Stated intent to harm another person."
+    when: {any: [harm_to_others]}
+  - id: RF-CARDIAC-COMBO
+    level: emergency
+    title: "Possible heart emergency"
+    rationale: "Chest pain with breathlessness, sweating, nausea, dizziness, fainting, palpitations or pain spreading to the arm, jaw, neck or back."
+    when:
+      all: [chest_pain]
+      any: [breathlessness, severe_breathing, sweating, arm_jaw_pain, nausea, dizziness, fainted, palpitations]
+  - id: RF-CARDIAC-QUALITY
+    level: emergency
+    title: "Possible heart emergency"
+    rationale: "Chest pain described as pressure, tightness, heaviness, squeezing or crushing, or a stated heart attack."
+    when: {any: [cardiac_chest_pain, heart_attack_mention]}
+  - id: RF-STROKE
+    level: emergency
+    title: "Possible stroke"
+    rationale: "Any FAST sign (face drooping, arm or leg weakness on one side, speech difficulty), sudden confusion, sudden vision loss or sudden worst-ever headache."
+    advice: "Note the time the symptoms started. Do not eat, drink or take medicine while waiting for help."
+    when: {any: [face_droop, one_sided_weakness, speech_difficulty, sudden_confusion, sudden_vision_loss, thunderclap_headache]}
+  - id: RF-BREATHING
+    level: emergency
+    title: "Severe breathing difficulty"
+    rationale: "Unable to breathe or speak in sentences, choking, blue or grey lips."
+    when: {any: [severe_breathing]}
+  - id: RF-ANAPHYLAXIS
+    level: emergency
+    title: "Possible severe allergic reaction"
+    rationale: "Swelling of the tongue, lips or mouth, a closing throat, or a swollen throat with breathing difficulty or an allergic trigger."
+    advice: "If an adrenaline auto-injector has been prescribed, follow its instructions."
+    when: {any: [airway_swelling]}
+  - id: RF-ANAPHYLAXIS-COMBO
+    level: emergency
+    title: "Possible severe allergic reaction"
+    rationale: "Swollen or tight throat together with breathing difficulty or an allergic trigger."
+    when:
+      all: [throat_swollen]
+      any: [breathlessness, severe_breathing, allergic_trigger]
+  - id: RF-BLEEDING
+    level: emergency
+    title: "Severe bleeding"
+    rationale: "Heavy or uncontrolled bleeding, or vomiting blood."
+    advice: "Press firmly on any external wound with a clean cloth while waiting for help."
+    when: {any: [severe_bleeding, vomiting_blood]}
+  - id: RF-GI-BLEED
+    level: emergency
+    title: "Possible internal bleeding"
+    rationale: "Black or tarry stool with dizziness or fainting."
+    when:
+      all: [black_stool]
+      any: [dizziness, fainted]
+  - id: RF-SEIZURE-UNCONSCIOUS
+    level: emergency
+    title: "Seizure or loss of consciousness"
+    rationale: "A seizure, or a person who is unconscious or not responding."
+    when: {any: [seizure, unresponsive]}
+  - id: RF-MENINGITIS
+    level: emergency
+    title: "Possible meningitis or sepsis"
+    rationale: "A rash that does not fade when a glass is pressed against it."
+    when: {any: [non_blanching_rash]}
+  - id: RF-MENINGITIS-COMBO
+    level: emergency
+    title: "Possible meningitis"
+    rationale: "Fever with a stiff neck."
+    when:
+      all: [fever]
+      any: [stiff_neck]
+  - id: RF-MENINGITIS-COMBO-2
+    level: emergency
+    title: "Possible meningitis"
+    rationale: "Light sensitivity with a stiff neck or with confusion."
+    when:
+      all: [photophobia]
+      any: [stiff_neck, confusion]
+  - id: RF-INFANT-FEVER
+    level: emergency
+    title: "Fever in a baby"
+    rationale: "Fever in a baby or infant under 3 months needs same-day emergency assessment."
+    when:
+      all: [infant, fever]
+  - id: RF-PREGNANCY
+    level: emergency
+    title: "Pregnancy warning sign"
+    rationale: "Bleeding or severe abdominal pain during pregnancy."
+    when:
+      all: [pregnant]
+      any: [bleeding_any, severe_abdominal_pain]
+  - id: RF-ABDOMEN
+    level: emergency
+    title: "Sudden severe abdominal pain"
+    rationale: "Sudden or severe abdominal pain."
+    when: {any: [severe_abdominal_pain]}
+  - id: RF-TESTICULAR
+    level: emergency
+    title: "Sudden testicular pain"
+    rationale: "Sudden or severe testicular pain can be testicular torsion."
+    when: {any: [testicular_pain]}
+  - id: RF-POISONING
+    level: emergency
+    title: "Possible poisoning or overdose"
+    rationale: "Overdose, swallowing a poisonous substance, or taking too much of a medicine."
+    advice: "Keep the container or packet to show the emergency team."
+    when: {any: [poisoning]}
+    extra_resources: [poison]
+
+  # ---------------------------------------------------------------- urgent
+  - id: RF-URGENT-CHEST-PAIN
+    level: urgent
+    title: "Chest pain should be checked today"
+    rationale: "Chest pain without other warning signs."
+    when: {any: [chest_pain]}
+  - id: RF-URGENT-HAEMOPTYSIS
+    level: urgent
+    title: "Coughing up blood should be checked today"
+    rationale: "Coughing up blood."
+    when: {any: [coughing_blood]}
+  - id: RF-URGENT-BLACK-STOOL
+    level: urgent
+    title: "Black or tarry stool should be checked today"
+    rationale: "Black or tarry stool without dizziness or fainting."
+    when: {any: [black_stool]}
+  - id: RF-URGENT-FAINTING
+    level: urgent
+    title: "Fainting should be checked today"
+    rationale: "A fainting episode without other warning signs."
+    when: {any: [fainted]}

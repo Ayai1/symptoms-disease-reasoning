@@ -1,4 +1,31 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+*.egg-info/
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# Model and data artifacts (downloaded or generated)
+backend/artifacts/
+backend/data/raw/
 models/
 rag_data/
-__pycache__/
 *.pkl
+
+# Node
+node_modules/
+.next/
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/

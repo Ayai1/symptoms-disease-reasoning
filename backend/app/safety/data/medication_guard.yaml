@@ -1,0 +1,39 @@
+# Medication and treatment request guard.
+# A message is refused when it matches any `strong_patterns`, or when it
+# matches a `request_patterns` entry AND contains a `medication_terms` entry.
+# Statements that only mention a medicine ("I took ibuprofen yesterday")
+# are not refused. Cases: backend/tests/safety/cases/medication_guard.yaml.
+
+schema_version: 1
+
+strong_patterns:
+  - '\b(what|which|correct|right|max|maximum|safe|recommended|usual|normal|daily)\s+(\w+\s+)?(dose|doses|dosage|dosing)\b'
+  - '\b(dose|dosage|dosing)\s+(of|for)\b'
+  - "\\bwhat\\s+(\\w+\\s+){0,3}(should|can|could|do|must)\\s+(i|we|he|she|they|you)\\s+(take|give|use)\\b"
+  - "\\b(prescribe|recommend|suggest)\\s+(me\\s+|us\\s+|him\\s+|her\\s+)?(a\\s+|some\\s+|any\\s+)?(medicine|medication|meds|drug|drugs|pill|pills|tablet|tablets|antibiotic\\w*|treatment|cure|remedy|remedies)\\b"
+  - '\b(what|which)\s+(is|are)\s+the\s+(best|right)\s+(treatment|cure|remedy|medicine|medication)\b'
+  - '\bhow\s+(do|can|should)\s+i\s+(treat|cure)\b'
+
+request_patterns:
+  - '\bhow\s+(much|many|often|frequently|long)\b'
+  - '\b(can|could|should|may|shall|must)\s+(i|we|he|she|they|you|my\s+\w+)\s+(take|give|have|use|mix|combine|double|increase|stop|start|switch)\b'
+  - '\bis\s+it\s+(ok|okay|safe|fine|alright|all\s+right|bad|dangerous)\s+to\s+(take|give|mix|combine|use|have|stop)\b'
+  - '\b(what|which)\s+(\w+\s+)?(medicine|medicines|medication|medications|meds|drug|drugs|pill|pills|tablet|tablets|antibiotic|antibiotics|painkiller|painkillers|syrup)\b'
+  - '\b(recommend|suggest|prescribe|prescription)\b'
+  - '\b(safe|ok|okay)\s+(to|for)\s+(take|give|use|mix)\b'
+  - '\bwith\s+(alcohol|my\s+other\s+(medicine|medication|meds|pills))\b'
+
+medication_terms:
+  - '\b(medicine|medicines|medication|medications|meds|drug|drugs)\b'
+  - '\b(pill|pills|tablet|tablets|capsule|capsules|syrup|syrups|drops|inhaler|inhalers|injection|injections|cream|ointment)\b'
+  - '\b(antibiotic|antibiotics|antiviral|antivirals|antihistamine|antihistamines|antacid|antacids|painkiller|painkillers|steroid|steroids)\b'
+  - '\b(paracetamol|acetaminophen|tylenol|calpol|crocin|dolo|ibuprofen|advil|motrin|nurofen|brufen|combiflam|aspirin|disprin|naproxen|aleve|diclofenac|voveran)\b'
+  - '\b(cetirizine|loratadine|fexofenadine|benadryl|diphenhydramine|chlorphenamine|piriton)\b'
+  - '\b(salbutamol|albuterol|ventolin|asthalin|budesonide|fluticasone|montelukast)\b'
+  - '\b(prednisone|prednisolone|dexamethasone|hydrocortisone)\b'
+  - '\b(amoxicillin|augmentin|azithromycin|doxycycline|ciprofloxacin|cephalexin|penicillin|clarithromycin)\b'
+  - '\b(codeine|tramadol|morphine|oxycodone|hydrocodone|gabapentin|pregabalin)\b'
+  - '\b(insulin|metformin|omeprazole|pantoprazole|ranitidine|famotidine|lansoprazole|warfarin|clopidogrel|atorvastatin)\b'
+  - '\b(sertraline|fluoxetine|citalopram|escitalopram|diazepam|lorazepam|alprazolam|xanax|melatonin)\b'
+  - '\b(dose|doses|dosage|dosing|mg|mcg|ml|milligrams?|micrograms?)\b'
+  - '\b\d+\s*(mg|mcg|ml)\b'
